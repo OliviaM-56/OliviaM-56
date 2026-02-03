@@ -2,511 +2,284 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>For Aulin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Isii!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Poppins:wght@300;400&display=swap" rel="stylesheet">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyB1oheIMbmEYNP7MOsjFz0CM_DPmIroFGU",
+            authDomain: "aulin-931d0.firebaseapp.com",
+            databaseURL: "https://aulin-931d0-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "aulin-931d0",
+            storageBucket: "aulin-931d0.firebasestorage.app",
+            messagingSenderId: "335393246838",
+            appId: "1:335393246838:web:e6f3c3f69ae972231a1957",
+            measurementId: "G-EGWD9HYXNZ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        
+        // --- REALTIME CHECKER ---
+        // Cek data 'answers/aulin' secara langsung
+        const statusRef = ref(db, 'answers/aulin');
+        
+        onValue(statusRef, (snapshot) => {
+            const loading = document.getElementById('loading-overlay');
+            if (snapshot.exists()) {
+                // JIKA DATA ADA -> LEMPAR KE SURAT
+                window.location.href = "surat.html";
+            } else {
+                // JIKA DATA KOSONG/DIHAPUS -> HILANGKAN LOADING, TAMPILKAN LOGIN
+                if(loading) loading.style.opacity = 0;
+                setTimeout(() => { if(loading) loading.style.display = 'none'; }, 500);
+            }
+        });
+
+        // Make 'set' available globally for finish function
+        window.db = db; window.set = set; window.ref = ref;
+    </script>
 
     <style>
-        /* --- CSS STYLING --- */
-        :root {
-            --primary-pink: #d48ba0;
-            --glass-bg: rgba(255, 255, 255, 0.4);
-            --glass-border: rgba(255, 255, 255, 0.7);
-            --text-main: #5d4048; 
-            --error-red: #d45d5d;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            /* 1. NEW BACKGROUND: Circular Pink Center fading to White */
-            background: radial-gradient(circle at center, #fcecef 0%, #fff0f5 40%, #ffffff 100%);
-            color: var(--text-main);
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            font-family: 'Poppins', sans-serif; 
-        }
-
-        .container {
-            width: 100%;
-            max-width: 800px;
-            padding: 2rem;
-            position: relative;
-            z-index: 10;
-        }
-
-        /* SLIDE TRANSITIONS */
-        .slide {
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            transition: opacity 0.8s ease-in-out;
-            height: 100%;
-            width: 100%;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        .slide.active {
-            display: flex;
-            opacity: 1;
-        }
-
-        /* TYPOGRAPHY */
-        h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 2.5rem;
-            margin-bottom: 2rem;
-            font-weight: 600;
-            color: #4a3b40;
-            line-height: 1.3;
-        }
-
-        p {
-            font-size: 1.15rem;
-            line-height: 1.9;
-            color: #6e5d62;
-            max-width: 650px;
-            font-weight: 300;
-        }
-
-        /* INPUT */
-        input[type="text"] {
-            padding: 18px 25px;
-            font-size: 1.1rem;
-            font-family: 'Poppins', sans-serif;
-            border: 1px solid var(--glass-border);
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-radius: 50px;
-            outline: none;
-            color: var(--text-main);
-            text-align: center;
-            margin-bottom: 30px;
-            width: 80%;
-            max-width: 400px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-        }
+        :root { --primary: #d48ba0; --primary-dark: #b06d82; --glass: rgba(255, 255, 255, 0.95); --text: #5d4048; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: radial-gradient(circle at center, #fcecef 0%, #fff0f5 40%, #ffffff 100%); color: var(--text); height: 100vh; font-family: 'Poppins', sans-serif; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
+        #app-container { width: 100%; max-width: 500px; height: 100%; position: relative; display: flex; flex-direction: column; }
         
-        input[type="text"]:focus {
-            background: rgba(255, 255, 255, 0.8);
-            box-shadow: 0 8px 25px rgba(212, 139, 160, 0.2);
-            border-color: var(--primary-pink);
+        /* Loading Overlay */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff0f5; z-index: 9999; display: flex; justify-content: center; align-items: center;
+            transition: opacity 0.5s ease;
         }
+        .spinner { width: 40px; height: 40px; border: 4px solid #fff; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        .btn-group {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            width: 100%;
-            align-items: center;
-        }
-
-        /* BUTTONS */
-        button {
-            background-color: var(--primary-pink);
-            color: white;
-            border: none;
-            padding: 16px 30px;
-            font-size: 1rem;
-            font-family: 'Poppins', sans-serif;
-            letter-spacing: 0.5px;
-            border-radius: 50px;
-            cursor: pointer;
-            width: 100%;
-            max-width: 380px;
-            box-shadow: 0 5px 15px rgba(212, 139, 160, 0.3);
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        }
-
-        button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(212, 139, 160, 0.5);
-            background-color: #d997ab;
-        }
-
-        /* SHAKE ANIMATION FOR WRONG ANSWER */
-        .shake {
-            animation: shake 0.5s;
-            background-color: var(--error-red) !important;
-        }
-
-        @keyframes shake {
-            0% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            50% { transform: translateX(10px); }
-            75% { transform: translateX(-10px); }
-            100% { transform: translateX(0); }
-        }
-
-        /* LETTER AREA */
-        #letter-content {
-            cursor: pointer;
-            min-height: 280px; 
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            padding: 0 20px;
-        }
-
-        /* PROGRESS DOTS */
-        .progress-container {
-            display: flex;
-            gap: 8px;
-            margin-top: 30px;
-            opacity: 0;
-            transition: opacity 0.5s;
-        }
+        /* UI Elements & Animations */
+        .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 20px 20px 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); background: transparent; }
+        .slide-center { transform: translateX(0); }
+        .slide-right { transform: translateX(100%); }
+        .slide-left { transform: translateX(-100%); }
         
-        .progress-dot {
-            width: 8px;
-            height: 8px;
-            background-color: #e0e0e0;
-            border-radius: 50%;
-            transition: background-color 0.3s;
-        }
+        .glass-card { background: var(--glass); border: 1px solid white; padding: 25px; border-radius: 25px; width: 100%; box-shadow: 0 10px 40px rgba(212, 139, 160, 0.2); position: relative; }
         
-        .progress-dot.active {
-            background-color: var(--primary-pink);
-            transform: scale(1.2);
+        button.primary-btn { 
+            background: var(--primary); color: white; border: none; padding: 12px 30px; font-size: 1rem; 
+            border-radius: 50px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: 600; 
+            box-shadow: 0 4px 10px rgba(212, 139, 160, 0.3); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
+        button.primary-btn:hover { transform: translateY(-3px) scale(1.02); background-color: var(--primary-dark); box-shadow: 0 10px 20px rgba(212, 139, 160, 0.4); }
+        button.primary-btn:active { transform: scale(0.95); }
 
-        .cursor {
-            display: inline-block;
-            width: 2px;
-            background-color: var(--primary-pink);
-            animation: blink 1s step-end infinite;
-        }
+        .btn-sec { background: transparent; border: 2px solid var(--primary); color: var(--primary); padding: 10px; border-radius: 50px; width: 100%; margin-top: 10px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; }
+        .btn-sec:hover { background-color: #fff0f5; transform: translateY(-2px); }
+        .back-btn { position: absolute; top: 15px; left: 15px; width: 35px; height: 35px; border-radius: 50%; background: white; border: 1px solid #eee; color: var(--primary); font-weight: bold; cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: all 0.3s; }
+        .back-btn:hover { transform: scale(1.15) rotate(-10deg); background-color: var(--primary); color: white; border-color: var(--primary); }
 
-        @keyframes blink { 50% { opacity: 0; } }
+        input, textarea { width: 100%; padding: 15px; border-radius: 15px; border: 1px solid #eee; margin-bottom: 10px; font-family: inherit; transition: 0.3s; }
+        input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(212, 139, 160, 0.1); outline: none; }
+        
+        #progress-header { padding: 20px; width: 100%; z-index: 10; }
+        .track { position: relative; height: 2px; background: #e0e0e0; display: flex; justify-content: space-between; align-items: center; }
+        .fill { position: absolute; left: 0; height: 100%; background: var(--primary); width: 0%; transition: width 0.4s; }
+        .dot { width: 12px; height: 12px; background: #e0e0e0; border-radius: 50%; z-index: 1; border: 2px solid white; transition: 0.3s; }
+        .dot.active { background: var(--primary); transform: scale(1.3); }
 
-        .hint {
-            font-size: 0.75rem;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: #998a8e;
-            margin-top: 3rem;
-            opacity: 0;
-            transition: opacity 0.5s;
-        }
-
-        /* BRIDGE SLIDE CLICK AREA */
-        #slide-bridge {
-            cursor: pointer;
-        }
-
+        .movie-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+        .movie-card { background: white; border-radius: 10px; overflow: hidden; font-size: 0.8rem; border: 2px solid transparent; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .movie-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-color: #fff0f5; }
+        .poster { height: 200px; background: #eee; background-size: cover; background-position: center; }
+        .sch-btn { padding: 5px 8px; font-size: 0.7rem; background: var(--primary); color: white; border-radius: 6px; border: none; margin: 2px; cursor: pointer; transition: all 0.2s ease; }
+        .sch-btn:hover { transform: scale(1.1); background-color: var(--primary-dark); }
+        
+        .option-item { background: white; padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; cursor: pointer; border: 1px solid transparent; transition: all 0.3s; }
+        .option-item:hover { border-color: var(--primary); background: #fff0f5; transform: translateX(5px); }
+        
+        .summary-item { display: flex; margin-bottom: 10px; text-align: left; border-bottom: 1px dashed #eee; padding-bottom: 5px; }
+        .s-icon { margin-right: 10px; font-size: 1.2rem; }
+        
+        .hidden { display: none; }
+        h1 { font-family: 'Playfair Display', serif; color: #4a3b40; margin-bottom: 10px; }
+        p, span { color: #6e5d62; }
+        .note { font-size: 0.7rem; font-style: italic; }
     </style>
 </head>
 <body>
+    <div id="loading-overlay"><div class="spinner"></div></div>
 
-    <div class="container">
-        
-        <div id="slide-name" class="slide active">
-            <h1>State your name:</h1>
-            <input type="text" id="nameInput" placeholder="Who are you?" autocomplete="off">
-            <button onclick="submitName()">Enter</button>
-        </div>
-
-        <div id="slide-bridge" class="slide" onclick="changeSlide('slide-bridge', 'slide-quiz-1')">
-            <h1>If you're truly Aulin...</h1>
-            <p>These questions will be easy.</p>
-            <p class="hint" style="opacity: 0.6; margin-top: 50px;">(Tap to continue)</p>
-        </div>
-
-        <div id="slide-quiz-1" class="slide">
-            <h1>What's Lutfi's favorite nickname for you?</h1>
-            <div class="btn-group">
-                <button onclick="checkAnswer(this, true, 'slide-quiz-2')">Aulin Olivia Musyaffa</button>
-                <button onclick="checkAnswer(this, false)">Olin Olip</button>
-                <button onclick="checkAnswer(this, false)">3owllin3olifia3musyava3</button>
-                <button onclick="checkAnswer(this, false)">Milo</button>
+    <div id="app-container">
+        <div id="progress-header">
+            <div class="track">
+                <div class="fill" id="p-fill"></div>
+                <div class="dot active" id="d0"></div><div class="dot" id="d1"></div><div class="dot" id="d2"></div><div class="dot" id="d3"></div><div class="dot" id="d4"></div>
             </div>
         </div>
 
-        <div id="slide-quiz-2" class="slide">
-            <h1>Who is Milo?</h1>
-            <div class="btn-group">
-                <button onclick="checkAnswer(this, false)">Kucingnya aulin</button>
-                <button onclick="checkAnswer(this, false)">Majikannya lutfi</button>
-                <button onclick="checkAnswer(this, true, 'slide-quiz-3')">Preman bintaro sektor sembilan</button>
-                <button onclick="checkAnswer(this, false)">Kucing penyakitan</button>
-            </div>
-        </div>
-
-        <div id="slide-quiz-3" class="slide">
-            <h1>Aulin's real number</h1>
-            <div class="btn-group">
-                <button onclick="checkAnswer(this, false)">67</button>
-                <button onclick="checkAnswer(this, false)">3</button>
-                <button onclick="checkAnswer(this, true, 'slide-quiz-4')">56</button>
-                <button onclick="checkAnswer(this, false)">65</button>
-            </div>
-        </div>
-
-        <div id="slide-quiz-4" class="slide">
-            <h1>Does Aulin look more gorgeous with glasses or without glasses?</h1>
-            <div class="btn-group">
-                <button onclick="checkAnswer(this, true, 'slide-quiz-5')">Lutfi likes both version of her</button>
-            </div>
-        </div>
-
-        <div id="slide-quiz-5" class="slide">
-            <h1>Siklus krebs (per 1 molekul Glukosa, 2 putaran) menghasilkan apa?</h1>
-            <div class="btn-group">
-                <button onclick="checkAnswer(this, false)">Gatau ih bukan anak eb</button>
-                <button onclick="checkAnswer(this, false)">4 CO3</button>
-                <button onclick="checkAnswer(this, false)">100 ATP</button>
-                <button onclick="checkAnswer(this, false)">1 FADH2</button>
-                <button onclick="checkAnswer(this, true, 'slide-ask')">6 NADH</button>
-            </div>
-        </div>
-
-        <div id="slide-ask" class="slide">
-            <h1>So... did you uhm.. say yes?</h1>
-            <div class="btn-group">
-                <button onclick="handleFinalAnswer('yes')">Yes</button>
-                <button onclick="handleFinalAnswer('no')">No</button>
-            </div>
-        </div>
-
-        <div id="slide-rejection" class="slide">
-            <h1>Are you sure? :(</h1>
-            <div class="btn-group">
-                <button onclick="endPresentation()">Yes</button>
-                <button onclick="goBackToAsk()">No</button>
-            </div>
-        </div>
-
-        <div id="slide-end" class="slide">
-            <h1>Okay...</h1>
-            <p>I understand. Have a nice day.</p>
-        </div>
-
-        <div id="slide-letter" class="slide">
-            <div id="letter-content" onclick="handleClick()">
-                <p><span id="letter-text"></span><span id="cursor" class="cursor">|</span></p>
-            </div>
-            
-            <div id="progress-container" class="progress-container"></div>
-            <p class="hint" id="hint-text">(Tap to continue)</p>
-        </div>
-
+        <div id="viewport"></div>
     </div>
 
     <script>
-        /* --- JAVASCRIPT LOGIC --- */
-
-        let userName = "";
-        let letterIndex = 0;
-        let charIndex = 0;
-        let isTyping = false;
-        let typingTimeout; 
-        let currentText = "";
-
-        // ALLOWED NAMES (Case Insensitive)
-        const allowedNames = ["aulin", "aulin olivia", "aulin olivia musyaffa", "olin", "olin olip"];
-
-        const letterParagraphs = [
-            "Hi Aulin",
-            "If you’re reading this, it means you said yes. I just want you to know that there’s nothing in this world that can even slightly describe how happy I am right now.",
-            "Without realizing it, I’ve been admiring you since the first time we met. Remember that gathering where you were the coordinator of my group? I was looking at everyone there, and honestly, the only reason I even wanted to participate was because I wanted to see you HAHAHA. That’s why I texted you. That’s why I noticed you didn’t invite me to the group chat, HAHAHA. But I guess I wasn’t bold enough to talk to you any further.",
-            "Time passed, and I didn’t see you at TPB at all. heck I even forgot that I once had a crush on you wkwkwk. Then MBC happened. I met someone again, someone I hadn’t seen in a long time. But now without glasses, and I fell in love again without even noticing at first that it was you hahah. Scared at first, but I really hit you with a “Aulin kita udah wawancara belum?” and you said “belum”, “ayo join join” and then you joined :’)",
-            "Throughout the wawancara I’m really trying my best not to stare at you and I hope you didn’t noticed it hahah sorry. And after that, I started asking your friends about you. Rafa even told me the text u sent her about to whom she send your picture to HAHAHA. Sorry about that. but you know the rest, it's all history.",
-            "I’m not really good with people, especially communicating. I feel like I can be either too quiet or too loud. So if the ride home today felt awkward, I’m sorry :( And sorry in advance if something like that happens again. I have a feeling it will heheh.",
-            "And, maybe you're wondering, 'now what?' 'pacaran ngapain ya?' well to be frank, I don't know it either. But you know what? let's keep it this way. I want us to unfold our own stories naturally. It may not be as romantic as a pnp, it wont be as fun as good news, maybe it will be more cringe than the how to lose a guy in 10 days, and maybe it will be scarier than your favorite horror movie. But as long as I'm unfolding it with you, it's enough to make me happy.",
-            "As I said before and as you already know it by now, I’m not the fun guy who can make you laugh. I’m not the smart one who gets straight A’s. I’m not the rich gentleman who can buy you everything you want. Sometimes I’m weird and do not know how to talk to you.",
-            "I’m not perfect, not even a good man to begin with. I’m just an ordinary boy who happens to be in love with you. And I’m sorry for my imperfections. I can’t promise a perfect future for you, or even a good one. But I can promise that I’ll be present. And I’ll try to make a present where both of us feel safe enough to stay, without fear.",
-            "With all that said, thank you, Aulin. You’ve made me very happy. I hope that someday, I can make you the happiest girl alive too. Makasih :( I really mean it"
+        // --- CONFIG ---
+        const TRAVEL_TIMES = { "Home": { "Paskal": 32, "PVJ": 46, "Ton Kedai": 45, "Ciwalk": 52, "BIP": 42, "Citylink": 23 }, "Paskal": { "PVJ": 13, "Paskal": 0, "Ciwalk": 20, "BIP": 10, "Citylink": 15 }, "PVJ": { "PVJ": 0, "Paskal": 21, "Ciwalk": 10, "BIP": 17, "Citylink": 40 }, "Ton Kedai": { "PVJ": 21, "Paskal": 21, "Ciwalk": 23, "BIP": 15, "Citylink": 35 } };
+        const MOVIES = [
+            { id: "m1", title: "One Battle After Another", img: "https://m.media-amazon.com/images/M/MV5BMzBkZmQ0NjMtNTZlMy00ZjdlLTg5ODUtYWFlNGM0YzE3MTg0XkEyXkFqcGc@._V1_.jpg", s: [{ l: "Citylink", t: "12:55" }, { l: "BIP", t: "13:05" }] },
+            { id: "m2", title: "5 Centimeters Per Second", img: "https://m.media-amazon.com/images/M/MV5BMDUzMjNiNGQtN2I2Yi00M2ZjLWI4NTQtNDkwNjUzYmY4ZTY4XkEyXkFqcGc@._V1_QL75_UY281_CR4,0,190,281_.jpg", s: [{ l: "Ciwalk", t: "12:50" }, { l: "PVJ", t: "13:10" }, { l: "Paskal", t: "13:45" }] },
+            { id: "m3", title: "The Unexpected Family", img: "https://m.media-amazon.com/images/M/MV5BMDg2NGM5MjYtOWI2NC00OGQyLWIzNzQtOTNhNWQ5YzczYzBmXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg", s: [{ l: "Citylink", t: "12:55" }, { l: "BIP", t: "13:05" }] }
         ];
 
-        // 1. Submit Name (Password Check)
-        function submitName() {
-            const input = document.getElementById('nameInput').value.trim();
-            if (!input) return;
+        // --- STATE ---
+        let state = { pickup: "10:00", loc: "Home", date: new Date().setHours(10,0,0,0), sel: {} };
+        const stack = []; let currId = 'login';
 
-            // Check if name is in allowed list (case insensitive)
-            if (allowedNames.includes(input.toLowerCase())) {
-                userName = input; // Keep format she typed
-                changeSlide('slide-name', 'slide-bridge');
-            } else {
-                // Shake effect for wrong name
-                const btn = document.querySelector('#slide-name button');
-                btn.classList.add('shake');
-                setTimeout(() => btn.classList.remove('shake'), 500);
-                document.getElementById('nameInput').value = "";
-                document.getElementById('nameInput').placeholder = "Try again :(";
-            }
-        }
+        // --- RENDERER ---
+        const views = {
+            login: `
+                <div class="glass-card" style="text-align:center">
+                    <h1>Hi, Aulin.</h1><p>Enter passcode:</p>
+                    <input type="text" id="pass" style="text-align:center; letter-spacing:5px" maxlength="6">
+                    <button class="primary-btn" onclick="login()">Unlock</button>
+                </div>`,
+            pickup: `
+                <button class="back-btn" onclick="back()">←</button>
+                <div class="glass-card" style="text-align:center">
+                    <h2>Jam Jemput</h2><h1 style="font-size:3rem; color:#d48ba0" id="time-display">${state.pickup}</h1>
+                    <input type="time" id="t-in" value="${state.pickup}" class="hidden" onchange="upTime(this.value)">
+                    <button class="primary-btn" onclick="nav('flow')">ACC 👍</button>
+                    <button class="btn-sec" onclick="document.getElementById('t-in').classList.remove('hidden')">Ganti Jam</button>
+                </div>`,
+            flow: `
+                <button class="back-btn" onclick="back()">←</button>
+                <div class="glass-card" style="text-align:center">
+                    <h2>Next Stop?</h2>
+                    <div class="option-item" onclick="nav('lunch')"><b>Makan Dulu</b> 🍚</div>
+                    <div class="option-item" onclick="nav('movie')"><b>Langsung Nonton</b> 🍿</div>
+                </div>`,
+            lunch: `
+                <button class="back-btn" onclick="back()">←</button>
+                <div class="glass-card" style="text-align:center"><h2>Makan Siang</h2>
+                    <div class="option-item" onclick="selLunch('Paskal', 30)"><b>Paskal</b> <span class="note">30m</span></div>
+                    <div class="option-item" onclick="selLunch('PVJ', 45)"><b>PVJ</b> <span class="note">45m</span></div>
+                    <div class="option-item" onclick="selLunch('Ton Kedai', 45)"><b>Ton Kedai</b> <span class="note">45m</span></div>
+                </div>`,
+            movie: `
+                <button class="back-btn" onclick="back()">←</button>
+                <div class="glass-card" style="text-align:center"><h2>Nonton Apa?</h2>
+                    <div class="movie-grid" id="m-grid"></div>
+                </div>`,
+            kiara: `
+                <button class="back-btn" onclick="back()">←</button>
+                <div class="glass-card" style="text-align:center"><h2>16:00 - Sore</h2>
+                    <p>Ke <b>Kiara Artha Park</b> yuk? Pake voucher mixue kamu hehe.</p>
+                    <button class="primary-btn" onclick="nav('sum')">ACC 👍</button>
+                    <button class="btn-sec" onclick="nav('alt')">Ga ACC :(</button>
+                </div>`,
+            alt: `
+                <button class="back-btn" onclick="back()">←</button>
+                <div class="glass-card" style="text-align:center"><h2>Kemana dong?</h2>
+                    <textarea id="alt-txt" rows="3"></textarea>
+                    <button class="primary-btn" onclick="saveAlt()">Lanjut</button>
+                </div>`,
+            sum: `
+                <button class="back-btn" onclick="back()">←</button>
+                <div class="glass-card" style="text-align:center"><h2>The Plan</h2>
+                    <div id="sum-list"></div>
+                    <button class="primary-btn" onclick="finish()">Deal! ❤️</button>
+                </div>`
+        };
 
-        // 2. Quiz Logic
-        function checkAnswer(btn, isCorrect, nextSlideId) {
-            if (isCorrect) {
-                changeSlide(btn.closest('.slide').id, nextSlideId);
-            } else {
-                btn.classList.add('shake');
-                setTimeout(() => btn.classList.remove('shake'), 500);
-            }
-        }
+        // --- INIT ---
+        const vp = document.getElementById('viewport');
+        render('login', 'center');
 
-        // 3. Final Ask Logic
-        function handleFinalAnswer(answer) {
-            if (answer === 'yes') {
-                startLetter();
-            } else {
-                changeSlide('slide-ask', 'slide-rejection');
-            }
-        }
-
-        function endPresentation() {
-            changeSlide('slide-rejection', 'slide-end');
-        }
-
-        function goBackToAsk() {
-            changeSlide('slide-rejection', 'slide-ask');
-        }
-
-        // 4. Start Letter & Dots
-        function startLetter() {
-            changeSlide('slide-ask', 'slide-letter');
+        // --- FUNCTIONS ---
+        function render(id, dir) {
+            const div = document.createElement('div');
+            div.className = `slide slide-${dir}`;
+            div.innerHTML = views[id];
+            div.id = id; 
+            vp.appendChild(div);
             
-            const dotsContainer = document.getElementById('progress-container');
-            dotsContainer.innerHTML = '';
-            for(let i=0; i<letterParagraphs.length; i++) {
-                const dot = document.createElement('div');
-                dot.classList.add('progress-dot');
-                if(i === 0) dot.classList.add('active');
-                dotsContainer.appendChild(dot);
-            }
-            dotsContainer.style.opacity = 1;
+            // Post-render logic
+            if(id === 'movie') fillMovies();
+            if(id === 'sum') fillSum();
+            if(id === 'pickup') document.getElementById('time-display').innerText = state.pickup;
 
-            letterIndex = 0;
-            setTimeout(() => {
-                prepareTyping(letterParagraphs[letterIndex]);
-            }, 1000);
-        }
-
-        // 5. SMART TYPING LOGIC
-        function prepareTyping(text) {
-            const textElement = document.getElementById('letter-text');
-            const hintElement = document.getElementById('hint-text');
-            const cursor = document.getElementById('cursor');
-            
-            currentText = text;
-            textElement.innerHTML = "";
-            charIndex = 0;
-            isTyping = true;
-            hintElement.style.opacity = 0;
-            cursor.style.display = "inline-block";
-
-            typeNextChar(); 
-        }
-
-        function typeNextChar() {
-            if (!isTyping) return;
-
-            const textElement = document.getElementById('letter-text');
-            const currentChar = currentText.charAt(charIndex);
-            
-            textElement.innerHTML += currentChar;
-            charIndex++;
-
-            if (charIndex < currentText.length) {
-                let nextDelay = 35; 
-
-                // Check for Sentence Endings (. ? !)
-                if (currentChar === '.' || currentChar === '?' || currentChar === '!') {
-                    if (charIndex < currentText.length && currentText.charAt(charIndex) === '.') {
-                        nextDelay = 35; 
-                    } else {
-                        nextDelay = 700; // Pause at end of sentence
-                    }
-                } 
-                else if (currentChar === ',') {
-                    nextDelay = 200; 
+            // Anim
+            requestAnimationFrame(() => {
+                div.className = 'slide slide-center';
+                if(vp.children.length > 1) {
+                    const old = vp.children[0];
+                    old.className = `slide slide-${dir === 'right' ? 'left' : 'right'}`;
+                    setTimeout(() => old.remove(), 500);
                 }
-
-                typingTimeout = setTimeout(typeNextChar, nextDelay);
-            } else {
-                finishTyping();
-            }
-        }
-
-        function finishTyping() {
-            clearTimeout(typingTimeout);
-            isTyping = false;
-            document.getElementById('letter-text').innerHTML = currentText;
-            document.getElementById('hint-text').style.opacity = 0.6;
-        }
-
-        function handleClick() {
-            if (isTyping) {
-                finishTyping(); 
-            } else {
-                nextLetterSlide(); 
-            }
-        }
-
-        function nextLetterSlide() {
-            if (letterIndex < letterParagraphs.length - 1) {
-                letterIndex++;
-                updateDots(letterIndex);
-                prepareTyping(letterParagraphs[letterIndex]);
-            } else {
-                document.getElementById('hint-text').innerText = "❤️";
-                document.getElementById('cursor').style.display = "none";
-            }
-        }
-
-        function updateDots(index) {
-            const dots = document.querySelectorAll('.progress-dot');
-            dots.forEach((dot, i) => {
-                if(i === index) dot.classList.add('active');
-                else dot.classList.remove('active');
             });
-        }
-
-        // Helper: Slides
-        function changeSlide(currentId, nextId) {
-            const current = document.getElementById(currentId);
-            const next = document.getElementById(nextId);
-
-            current.style.opacity = 0;
-            current.style.pointerEvents = 'none';
             
-            setTimeout(() => {
-                current.classList.remove('active');
-                next.classList.add('active');
-                void next.offsetWidth;
-                next.style.opacity = 1;
-                next.style.pointerEvents = 'all';
-            }, 800);
+            // Progress
+            const steps = {pickup:0, flow:1, lunch:1, movie:2, kiara:3, alt:3, sum:4};
+            if(steps[id] !== undefined) {
+                document.getElementById('p-fill').style.width = (steps[id]*25)+'%';
+                for(let i=0;i<5;i++) document.getElementById('d'+i).className = i<=steps[id] ? 'dot active' : 'dot';
+            }
         }
 
-        // Enter key for name input
-        document.getElementById("nameInput").addEventListener("keypress", function(event) {
-            if (event.key === "Enter") submitName();
-        });
+        window.login = () => {
+            if(document.getElementById('pass').value === '565656') {
+                currId = 'pickup'; render('pickup', 'right');
+            } else alert('Salah password :p');
+        };
 
+        window.nav = (id) => { stack.push(currId); currId = id; render(id, 'right'); };
+        window.back = () => { if(stack.length) { const p = stack.pop(); currId = p; render(p, 'left'); } };
+        
+        window.upTime = (v) => { state.pickup = v; document.getElementById('time-display').innerText = v; };
+        
+        window.selLunch = (l, t) => { 
+            state.loc = l; state.sel.lunch = l; 
+            nav('movie'); 
+        };
+
+        window.fillMovies = () => {
+            const c = document.getElementById('m-grid');
+            MOVIES.forEach(m => {
+                let html = `<div class="movie-card"><div class="poster" style="background-image:url('${m.img}')"></div><div style="padding:5px"><b>${m.title}</b><br>`;
+                if(!m.s.length) html += `<i class="note">Belum ada jadwal</i>`;
+                m.s.forEach(s => html += `<button class="sch-btn" onclick="pickMov('${m.title}','${s.l}','${s.t}')">${s.l} ${s.t}</button>`);
+                html += `</div></div>`;
+                c.innerHTML += html;
+            });
+        };
+
+        window.pickMov = (t, l, tm) => { state.sel.movie = `${t} (${l} ${tm})`; nav('kiara'); };
+        window.saveAlt = () => { state.sel.alt = document.getElementById('alt-txt').value; nav('sum'); };
+
+        window.fillSum = () => {
+            const s = document.getElementById('sum-list');
+            s.innerHTML = `
+                <div class="summary-item"><span class="s-icon">🚗</span><div><b>Jemput</b><br>${state.pickup}</div></div>
+                <div class="summary-item"><span class="s-icon">🍚</span><div><b>Makan</b><br>${state.sel.lunch || 'Langsung Nonton'}</div></div>
+                <div class="summary-item"><span class="s-icon">🎬</span><div><b>Film</b><br>${state.sel.movie || '-'}</div></div>
+                <div class="summary-item"><span class="s-icon">🌳</span><div><b>Sore</b><br>${state.sel.alt || 'Kiara Artha Park'}</div></div>
+            `;
+        };
+
+        window.finish = () => {
+            const btn = document.querySelector('.primary-btn');
+            btn.innerText = "Saving...";
+            
+            // KEY CHANGE: Simpan dengan key 'answers/aulin' agar mudah dicek
+            // Menggunakan SET (bukan PUSH) agar menimpa data lama (resetable)
+            window.set(window.ref(window.db, 'answers/aulin'), {
+                ...state, user: "Aulin", timestamp: new Date().toISOString()
+            }).then(() => {
+                // Setelah save berhasil, firebase listener di atas akan otomatis redirect ke surat.html
+                // Tapi kita bisa paksa redirect juga biar cepat
+                window.location.href = "surat.html";
+            });
+        };
     </script>
 </body>
 </html>

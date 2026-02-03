@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Surprise!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyB1oheIMbmEYNP7MOsjFz0CM_DPmIroFGU",
+            authDomain: "aulin-931d0.firebaseapp.com",
+            databaseURL: "https://aulin-931d0-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "aulin-931d0",
+            storageBucket: "aulin-931d0.firebasestorage.app",
+            messagingSenderId: "335393246838",
+            appId: "1:335393246838:web:e6f3c3f69ae972231a1957",
+            measurementId: "G-EGWD9HYXNZ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        
+        // --- REALTIME GUARD ---
+        // Jika data 'answers/aulin' dihapus, paksa balik ke index.html
+        const statusRef = ref(db, 'answers/aulin');
+        onValue(statusRef, (snapshot) => {
+            const loading = document.getElementById('loading-overlay');
+            if (!snapshot.exists()) {
+                window.location.href = "index.html";
+            } else {
+                // Data aman, hilangkan loading
+                if(loading) loading.style.opacity = 0;
+                setTimeout(() => { if(loading) loading.style.display = 'none'; }, 500);
+            }
+        });
+    </script>
+
+    <style>
+        :root { --primary: #d48ba0; --primary-dark: #b06d82; --text: #5d4048; }
+        body { background: radial-gradient(circle at center, #fcecef 0%, #fff0f5 40%, #ffffff 100%); color: var(--text); height: 100vh; font-family: 'Poppins', sans-serif; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; margin: 0; }
+        
+        /* Loading Overlay */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff0f5; z-index: 9999; display: flex; justify-content: center; align-items: center;
+            transition: opacity 0.5s ease;
+        }
+        .spinner { width: 40px; height: 40px; border: 4px solid #fff; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .container { width: 100%; max-width: 600px; padding: 20px; position: relative; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;}
+        
+        /* Countdown */
+        .timer-box { display: flex; gap: 10px; margin: 20px 0; justify-content: center; }
+        .t-unit { background: white; padding: 15px; border-radius: 15px; min-width: 70px; box-shadow: 0 5px 15px rgba(212,139,160,0.2); }
+        .t-val { font-size: 2rem; font-weight: 600; color: var(--primary); display: block; line-height: 1; }
+        .t-label { font-size: 0.7rem; text-transform: uppercase; color: #999; }
+        
+        /* Letter */
+        #letter-view { display: none; width: 100%; animation: fadeUp 1s; }
+        #letter-text { font-size: 1.1rem; line-height: 1.8; color: #6e5d62; min-height: 200px; white-space: pre-wrap; cursor: pointer; }
+        
+        /* Buttons with Hover */
+        button { 
+            background: var(--primary); color: white; border: none; padding: 15px 40px; 
+            font-size: 1rem; border-radius: 50px; cursor: pointer; margin-top: 20px; 
+            box-shadow: 0 5px 15px rgba(212,139,160,0.3); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        button:hover { transform: translateY(-3px) scale(1.05); background-color: var(--primary-dark); box-shadow: 0 10px 25px rgba(212, 139, 160, 0.5); }
+        button:active { transform: scale(0.95); }
+
+        .hidden { display: none; }
+        
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        #cursor { display: inline-block; width: 2px; height: 1.2em; background: var(--primary); animation: blink 1s infinite; vertical-align: middle;}
+        @keyframes blink { 50% { opacity: 0; } }
+        
+        h1 { font-family: 'Playfair Display', serif; color: #4a3b40; }
+    </style>
+</head>
+<body>
+    <div id="loading-overlay"><div class="spinner"></div></div>
+
+    <div class="container">
+        
+        <div id="countdown-section">
+            <h1>It's Official!</h1>
+            <p id="sub-msg">Counting down to our date...</p>
+            
+            <div class="timer-box">
+                <div class="t-unit"><span class="t-val" id="d">00</span><span class="t-label">DAYS</span></div>
+                <div class="t-unit"><span class="t-val" id="h">00</span><span class="t-label">HRS</span></div>
+                <div class="t-unit"><span class="t-val" id="m">00</span><span class="t-label">MINS</span></div>
+            </div>
+
+            <button id="btn-open" class="hidden" onclick="openLetter()">Open Letter 💌</button>
+        </div>
+
+        <div id="letter-view">
+            <div onclick="nextPart()">
+                <p><span id="letter-text"></span><span id="cursor"></span></p>
+            </div>
+            <p style="font-size:0.7rem; color:#aaa; margin-top:30px">(Tap to continue)</p>
+        </div>
+
+    </div>
+
+    <script>
+        // --- SETTINGS (Ganti Tanggal Disini) ---
+        const DATE_PICKUP = new Date(2026, 1, 5, 11, 0, 0); // 5 Feb 2026, 11:00
+        const DATE_LETTER = new Date(2026, 1, 5, 18, 0, 0); // 5 Feb 2026, 18:00
+
+        // --- COUNTDOWN LOGIC ---
+        function updateTimer() {
+            const now = new Date();
+            const diff = DATE_PICKUP - now;
+
+            if (diff > 0) {
+                // Masih menghitung mundur
+                document.getElementById('d').innerText = Math.floor(diff / (1000*60*60*24));
+                document.getElementById('h').innerText = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+                document.getElementById('m').innerText = Math.floor((diff % (1000*60*60)) / (1000*60));
+            } else {
+                // Waktu Jemput Sudah Lewat
+                document.getElementById('sub-msg').innerText = "Hope you had fun today!";
+                document.getElementById('d').innerText = "00";
+                document.getElementById('h').innerText = "00";
+                document.getElementById('m').innerText = "00";
+                
+                // Cek Waktu Surat
+                if(now >= DATE_LETTER) {
+                    document.getElementById('sub-msg').innerText = "I have something for you.";
+                    document.getElementById('btn-open').classList.remove('hidden');
+                }
+            }
+        }
+        setInterval(updateTimer, 1000);
+        updateTimer(); // Run once immediately
+
+        // --- LETTER LOGIC ---
+        const paragraphs = [
+            "Hi Aulin",
+            "If you’re reading this, it means you said yes. I just want you to know that there’s nothing in this world that can even slightly describe how happy I am right now.",
+            "Without realizing it, I’ve been admiring you since the first time we met. Remember that gathering where you were the coordinator of my group? I was looking at everyone there, and honestly, the only reason I even wanted to participate was because I wanted to see you HAHAHA. That’s why I texted you. That’s why I noticed you didn’t invite me to the group chat, HAHAHA. But I guess I wasn’t bold enough to talk to you any further.",
+            "Time passed, and I didn’t see you at TPB at all. heck I even forgot that I once had a crush on you wkwkwk. Then MBC happened. I met someone again, someone I hadn’t seen in a long time. But now without glasses, and I fell in love again without even noticing at first that it was you hahah. Scared at first, but I really hit you with a “Aulin kita udah wawancara belum?” and you said “belum”, “ayo join join” and then you joined :’)",
+            "Throughout the wawancara I’m really trying my best not to stare at you and I hope you didn’t noticed it hahah sorry. And after that, I started asking your friends about you. Rafa even told me the text u sent her about to whom she send your picture to HAHAHA. Sorry about that. but you know the rest, it's all history.",
+            "I’m not really good with people, especially communicating. I feel like I can be either too quiet or too loud. So if the ride home today felt awkward, I’m sorry :( And sorry in advance if something like that happens again. I have a feeling it will heheh.",
+            "And, maybe you're wondering, 'now what?' 'pacaran ngapain ya?' well to be frank, I don't know it either. But you know what? let's keep it this way. I want us to unfold our own stories naturally. It may not be as romantic as a pnp, it wont be as fun as good news, maybe it will be more cringe than the how to lose a guy in 10 days, and maybe it will be scarier than your favorite horror movie. But as long as I'm unfolding it with you, it's enough to make me happy.",
+            "As I said before and as you already know it by now, I’m not the fun guy who can make you laugh. I’m not the smart one who gets straight A’s. I’m not the rich gentleman who can buy you everything you want. Sometimes I’m weird and do not know how to talk to you.",
+            "I’m not perfect, not even a good man to begin with. I’m just an ordinary boy who happens to be in love with you. And I’m sorry for my imperfections. I can’t promise a perfect future for you, or even a good one. But I can promise that I’ll be present. And I’ll try to make a present where both of us feel safe enough to stay, without fear.",
+            "With all that said, thank you, Aulin. You’ve made me very happy. I hope that someday, I can make you the happiest girl alive too. Makasih :( I really mean it\n\n Sincerely, Lutfi :)"
+        ];
+
+        let idx = 0; let charIdx = 0; let isTyping = false; let txtTimeout;
+
+        function openLetter() {
+            document.getElementById('countdown-section').style.display = 'none';
+            document.getElementById('letter-view').style.display = 'block';
+            typeText(paragraphs[0]);
+        }
+
+        function typeText(text) {
+            isTyping = true;
+            const el = document.getElementById('letter-text');
+            el.innerHTML = ""; charIdx = 0;
+            
+            function type() {
+                if(charIdx < text.length) {
+                    el.innerHTML += text.charAt(charIdx) === '\n' ? '<br>' : text.charAt(charIdx);
+                    charIdx++;
+                    txtTimeout = setTimeout(type, 30);
+                } else {
+                    isTyping = false;
+                }
+            }
+            type();
+        }
+
+        window.nextPart = () => {
+            if(isTyping) {
+                clearTimeout(txtTimeout);
+                document.getElementById('letter-text').innerHTML = paragraphs[idx].replace(/\n/g, '<br>');
+                isTyping = false;
+            } else {
+                if(idx < paragraphs.length - 1) {
+                    idx++;
+                    typeText(paragraphs[idx]);
+                } else {
+                    document.getElementById('cursor').style.display = 'none';
+                }
+            }
+        };
+    </script>
+</body>
+</html>
