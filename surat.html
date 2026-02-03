@@ -24,62 +24,72 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         
-        // --- REALTIME GUARD ---
-        // Jika data 'answers/aulin' dihapus, paksa balik ke index.html
+        // Guard: Balik ke index jika data dihapus
         const statusRef = ref(db, 'answers/aulin');
         onValue(statusRef, (snapshot) => {
             const loading = document.getElementById('loading-overlay');
             if (!snapshot.exists()) {
                 window.location.href = "index.html";
             } else {
-                // Data aman, hilangkan loading
-                if(loading) loading.style.opacity = 0;
-                setTimeout(() => { if(loading) loading.style.display = 'none'; }, 500);
+                if(loading) {
+                    loading.style.opacity = 0;
+                    setTimeout(() => loading.style.display = 'none', 500);
+                }
             }
         });
     </script>
 
     <style>
-        :root { --primary: #d48ba0; --primary-dark: #b06d82; --text: #5d4048; }
+        :root { --primary: #d48ba0; --text: #5d4048; --error: #d45d5d; }
+        * { box-sizing: border-box; }
         body { background: radial-gradient(circle at center, #fcecef 0%, #fff0f5 40%, #ffffff 100%); color: var(--text); height: 100vh; font-family: 'Poppins', sans-serif; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; margin: 0; }
         
+        .container { width: 100%; max-width: 600px; padding: 20px; position: relative; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;}
+        
         /* Loading Overlay */
-        #loading-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #fff0f5; z-index: 9999; display: flex; justify-content: center; align-items: center;
-            transition: opacity 0.5s ease;
-        }
+        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff0f5; z-index: 9999; display: flex; justify-content: center; align-items: center; transition: opacity 0.5s ease; }
         .spinner { width: 40px; height: 40px; border: 4px solid #fff; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        .container { width: 100%; max-width: 600px; padding: 20px; position: relative; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;}
-        
-        /* Countdown */
+        /* SECTIONS */
+        .section { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; transition: opacity 0.8s ease; }
+        .hidden { display: none !important; opacity: 0; }
+
+        /* 1. COUNTDOWN */
         .timer-box { display: flex; gap: 10px; margin: 20px 0; justify-content: center; }
         .t-unit { background: white; padding: 15px; border-radius: 15px; min-width: 70px; box-shadow: 0 5px 15px rgba(212,139,160,0.2); }
         .t-val { font-size: 2rem; font-weight: 600; color: var(--primary); display: block; line-height: 1; }
         .t-label { font-size: 0.7rem; text-transform: uppercase; color: #999; }
-        
-        /* Letter */
-        #letter-view { display: none; width: 100%; animation: fadeUp 1s; }
-        #letter-text { font-size: 1.1rem; line-height: 1.8; color: #6e5d62; min-height: 200px; white-space: pre-wrap; cursor: pointer; }
-        
-        /* Buttons with Hover */
-        button { 
-            background: var(--primary); color: white; border: none; padding: 15px 40px; 
-            font-size: 1rem; border-radius: 50px; cursor: pointer; margin-top: 20px; 
-            box-shadow: 0 5px 15px rgba(212,139,160,0.3); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        }
-        button:hover { transform: translateY(-3px) scale(1.05); background-color: var(--primary-dark); box-shadow: 0 10px 25px rgba(212, 139, 160, 0.5); }
-        button:active { transform: scale(0.95); }
 
-        .hidden { display: none; }
+        /* 2. GATE (PASSCODE) */
+        #gate h1 { font-size: 2.5rem; margin-bottom: 5px; }
+        #gate input { 
+            background: rgba(255,255,255,0.4); border: 2px solid white; 
+            box-shadow: none; width: 200px; font-size: 1.2rem; letter-spacing: 5px;
+            padding: 15px; border-radius: 15px; text-align: center; outline: none; margin-bottom: 10px;
+        }
+
+        /* 3. LETTER VIEW */
+        #letter-content { cursor: pointer; min-height: 280px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; padding: 0 20px; }
+        #letter-text { font-size: 1.15rem; line-height: 1.9; color: #6e5d62; max-width: 650px; font-weight: 300; }
         
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        #cursor { display: inline-block; width: 2px; height: 1.2em; background: var(--primary); animation: blink 1s infinite; vertical-align: middle;}
-        @keyframes blink { 50% { opacity: 0; } }
+        /* Progress Dots */
+        .progress-container { display: flex; gap: 8px; margin-top: 30px; opacity: 0; transition: opacity 0.5s; }
+        .progress-dot { width: 8px; height: 8px; background-color: #e0e0e0; border-radius: 50%; transition: background-color 0.3s; }
+        .progress-dot.active { background-color: var(--primary); transform: scale(1.2); }
+        
+        /* Elements */
+        button { background: var(--primary); color: white; border: none; padding: 15px 40px; font-size: 1rem; border-radius: 50px; cursor: pointer; margin-top: 20px; box-shadow: 0 5px 15px rgba(212,139,160,0.3); transition: 0.3s; }
+        button:hover { transform: scale(1.05); background: #b06d82; }
         
         h1 { font-family: 'Playfair Display', serif; color: #4a3b40; }
+        .hint { font-size: 0.75rem; letter-spacing: 1px; text-transform: uppercase; color: #998a8e; margin-top: 3rem; opacity: 0; transition: opacity 0.5s; }
+        
+        /* Cursor & Animation */
+        #cursor { display: inline-block; width: 2px; height: 1em; background: var(--primary); animation: blink 1s step-end infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+        .shake { animation: shake 0.5s; background-color: var(--error) !important; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
     </style>
 </head>
 <body>
@@ -87,9 +97,9 @@
 
     <div class="container">
         
-        <div id="countdown-section">
+        <div id="countdown-section" class="section">
             <h1>It's Official!</h1>
-            <p id="sub-msg">See you very soon!!!</p>
+            <p id="sub-msg">See you very soon!</p>
             
             <div class="timer-box">
                 <div class="t-unit"><span class="t-val" id="d">00</span><span class="t-label">DAYS</span></div>
@@ -97,104 +107,208 @@
                 <div class="t-unit"><span class="t-val" id="m">00</span><span class="t-label">MINS</span></div>
             </div>
 
-            <button id="btn-open" class="hidden" onclick="openLetter()">Open Letter 💌</button>
+            <button id="btn-open" class="hidden" onclick="showGate()">Open Letter 💌</button>
         </div>
 
-        <div id="letter-view">
-            <div onclick="nextPart()">
+        <div id="gate" class="section hidden">
+            <h1>Hi, Aulin.</h1>
+            <p>Enter the code to open the letter.</p>
+            <input type="text" id="pass" maxlength="6" placeholder="******">
+            <br>
+            <button onclick="checkPass()">Read</button>
+        </div>
+
+        <div id="letter-view" class="section hidden">
+            <div id="letter-content" onclick="handleClick()">
                 <p><span id="letter-text"></span><span id="cursor"></span></p>
             </div>
-            <p style="font-size:0.7rem; color:#aaa; margin-top:30px">(Tap to continue)</p>
+            <div id="progress-container" class="progress-container"></div>
+            <p class="hint" id="hint-text">(Tap to continue)</p>
         </div>
 
     </div>
 
     <script>
-        // --- SETTINGS (Ganti Tanggal Disini) ---
+        // --- 1. CONFIGURATION ---
         const DATE_PICKUP = new Date(2026, 1, 5, 11, 0, 0); // 5 Feb 2026, 11:00
         const DATE_LETTER = new Date(2026, 1, 5, 18, 0, 0); // 5 Feb 2026, 18:00
 
-        // --- COUNTDOWN LOGIC ---
+        const letterParagraphs = [
+            "Hi Aulin",
+            "If you’re reading this, it means you said yes. I just want you to know that there’s nothing in this world that can even slightly describe how happy I am right now.",
+            "Without realizing it, I’ve been admiring you since the first time we met. Remember that gathering where you were the coordinator of my group? I was looking at everyone there, and honestly, the only reason I even wanted to participate was because I wanted to see you HAHAHA. That’s why I texted you. That’s why I noticed you didn’t invite me to the group chat, HAHAHA. But I guess I wasn’t bold enough to talk to you any further.",
+            "Time passed, and I didn’t see you at TPB at all. heck I even forgot that I once had a crush on you wkwkwk. Then MBC happened. I met someone again, someone I hadn’t seen in a long time. But now without glasses, and I fell in love again without even noticing at first that it was you hahah. Scared at first, but I really hit you with a “Aulin kita udah wawancara belum?” and you said “belum”, “ayo join join” and then you joined :’)",
+            "Throughout the wawancara I’m really trying my best not to stare at you and I hope you didn’t noticed it hahah sorry. And after that, I started asking your friends about you. The rest, it's all history.",
+            "I’m not really good with people, especially communicating. I feel like I can be either too quiet or too loud. So if the ride home today felt awkward, I’m sorry :( And sorry in advance if something like that happens again. I have a feeling it will heheh.",
+            "And, maybe you're wondering, 'now what?' 'pacaran ngapain ya?' well to be frank, I don't know it either. But you know what? let's keep it this way. I want us to unfold our own stories naturally. It may not be as romantic as a pnp, it wont be as fun as good news, maybe it will be more cringe than the how to lose a guy in 10 days, and maybe it will be scarier than your favorite horror movie. But as long as I'm unfolding it with you, it's enough to make me happy.",
+            "As I said before and as you already know it by now, I’m not the fun guy who can make you laugh. I’m not the smart one who gets straight A’s. I’m not the rich gentleman who can buy you everything you want. Sometimes I’m weird and do not know how to talk to you.",
+            "I’m not perfect, not even a good man to begin with. I’m just an ordinary boy who happens to be in love with you. And I’m sorry for my imperfections. I can’t promise a perfect future for you, or even a good one. But I can promise that I’ll be present. And I’ll try to make a present where both of us feel safe enough to stay, without fear.",
+            "With all that said, thank you, Aulin. You’ve made me very happy. I hope that someday, I can make you the happiest girl alive too. Makasih :( I really mean it"
+        ];
+
+        let letterIndex = 0;
+        let charIndex = 0;
+        let isTyping = false;
+        let typingTimeout;
+        let currentText = "";
+
+        // --- 2. COUNTDOWN LOGIC ---
         function updateTimer() {
             const now = new Date();
             const diff = DATE_PICKUP - now;
 
             if (diff > 0) {
-                // Masih menghitung mundur
+                // Masih countdown ke jemput
                 document.getElementById('d').innerText = Math.floor(diff / (1000*60*60*24));
                 document.getElementById('h').innerText = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
                 document.getElementById('m').innerText = Math.floor((diff % (1000*60*60)) / (1000*60));
             } else {
-                // Waktu Jemput Sudah Lewat
-                document.getElementById('sub-msg').innerText = "Hope you had fun today!";
+                // Lewat jam jemput
                 document.getElementById('d').innerText = "00";
                 document.getElementById('h').innerText = "00";
                 document.getElementById('m').innerText = "00";
+                document.getElementById('sub-msg').innerText = "Hope you had fun today! ❤️";
                 
-                // Cek Waktu Surat
+                // Cek jam surat (18:00)
                 if(now >= DATE_LETTER) {
                     document.getElementById('sub-msg').innerText = "I have something for you.";
                     document.getElementById('btn-open').classList.remove('hidden');
                 }
             }
         }
-        setInterval(updateTimer, 1000);
-        updateTimer(); // Run once immediately
+        setInterval(updateTimer, 1000); updateTimer();
 
-        // --- LETTER LOGIC ---
-        const paragraphs = [
-            "Hi Aulin",
-            "If you’re reading this, it means you said yes. I just want you to know that there’s nothing in this world that can even slightly describe how happy I am right now.",
-            "Without realizing it, I’ve been admiring you since the first time we met. Remember that gathering where you were the coordinator of my group? I was looking at everyone there, and honestly, the only reason I even wanted to participate was because I wanted to see you HAHAHA. That’s why I texted you. That’s why I noticed you didn’t invite me to the group chat, HAHAHA. But I guess I wasn’t bold enough to talk to you any further.",
-            "Time passed, and I didn’t see you at TPB at all. heck I even forgot that I once had a crush on you wkwkwk. Then MBC happened. I met someone again, someone I hadn’t seen in a long time. But now without glasses, and I fell in love again without even noticing at first that it was you hahah. Scared at first, but I really hit you with a “Aulin kita udah wawancara belum?” and you said “belum”, “ayo join join” and then you joined :’)",
-            "Throughout the wawancara I’m really trying my best not to stare at you and I hope you didn’t noticed it hahah sorry. And after that, I started asking your friends about you. Rafa even told me the text u sent her about to whom she send your picture to HAHAHA. Sorry about that. but you know the rest, it's all history.",
-            "I’m not really good with people, especially communicating. I feel like I can be either too quiet or too loud. So if the ride home today felt awkward, I’m sorry :( And sorry in advance if something like that happens again. I have a feeling it will heheh.",
-            "And, maybe you're wondering, 'now what?' 'pacaran ngapain ya?' well to be frank, I don't know it either. But you know what? let's keep it this way. I want us to unfold our own stories naturally. It may not be as romantic as a pnp, it wont be as fun as good news, maybe it will be more cringe than the how to lose a guy in 10 days, and maybe it will be scarier than your favorite horror movie. But as long as I'm unfolding it with you, it's enough to make me happy.",
-            "As I said before and as you already know it by now, I’m not the fun guy who can make you laugh. I’m not the smart one who gets straight A’s. I’m not the rich gentleman who can buy you everything you want. Sometimes I’m weird and do not know how to talk to you.",
-            "I’m not perfect, not even a good man to begin with. I’m just an ordinary boy who happens to be in love with you. And I’m sorry for my imperfections. I can’t promise a perfect future for you, or even a good one. But I can promise that I’ll be present. And I’ll try to make a present where both of us feel safe enough to stay, without fear.",
-            "With all that said, thank you, Aulin. You’ve made me very happy. I hope that someday, I can make you the happiest girl alive too. Makasih :( I really mean it\n\n Sincerely, Lutfi :)"
-        ];
-
-        let idx = 0; let charIdx = 0; let isTyping = false; let txtTimeout;
-
-        function openLetter() {
-            document.getElementById('countdown-section').style.display = 'none';
-            document.getElementById('letter-view').style.display = 'block';
-            typeText(paragraphs[0]);
-        }
-
-        function typeText(text) {
-            isTyping = true;
-            const el = document.getElementById('letter-text');
-            el.innerHTML = ""; charIdx = 0;
+        // --- 3. TRANSITION LOGIC ---
+        window.showGate = () => {
+            const cd = document.getElementById('countdown-section');
+            const gate = document.getElementById('gate');
             
-            function type() {
-                if(charIdx < text.length) {
-                    el.innerHTML += text.charAt(charIdx) === '\n' ? '<br>' : text.charAt(charIdx);
-                    charIdx++;
-                    txtTimeout = setTimeout(type, 30);
-                } else {
-                    isTyping = false;
-                }
-            }
-            type();
-        }
+            cd.style.opacity = 0;
+            setTimeout(() => {
+                cd.classList.add('hidden');
+                gate.classList.remove('hidden');
+                requestAnimationFrame(() => gate.style.opacity = 1); // Fade in
+            }, 500);
+        };
 
-        window.nextPart = () => {
-            if(isTyping) {
-                clearTimeout(txtTimeout);
-                document.getElementById('letter-text').innerHTML = paragraphs[idx].replace(/\n/g, '<br>');
-                isTyping = false;
+        window.checkPass = () => {
+            const btn = document.querySelector('#gate button');
+            if(document.getElementById('pass').value === '646464') {
+                const gate = document.getElementById('gate');
+                gate.style.opacity = 0;
+                setTimeout(() => {
+                    gate.classList.add('hidden');
+                    startLetter();
+                }, 500);
             } else {
-                if(idx < paragraphs.length - 1) {
-                    idx++;
-                    typeText(paragraphs[idx]);
-                } else {
-                    document.getElementById('cursor').style.display = 'none';
-                }
+                btn.classList.add('shake');
+                setTimeout(() => btn.classList.remove('shake'), 500);
             }
         };
+
+        // --- 4. TYPING ANIMATION (EXACT LOGIC FROM YOUR SNIPPET) ---
+        function startLetter() {
+            const letterView = document.getElementById('letter-view');
+            letterView.classList.remove('hidden');
+            requestAnimationFrame(() => letterView.style.opacity = 1);
+
+            // Setup Dots
+            const dotsContainer = document.getElementById('progress-container');
+            dotsContainer.innerHTML = '';
+            for(let i=0; i<letterParagraphs.length; i++) {
+                const dot = document.createElement('div');
+                dot.classList.add('progress-dot');
+                if(i === 0) dot.classList.add('active');
+                dotsContainer.appendChild(dot);
+            }
+            dotsContainer.style.opacity = 1;
+
+            letterIndex = 0;
+            setTimeout(() => {
+                prepareTyping(letterParagraphs[letterIndex]);
+            }, 1000);
+        }
+
+        function prepareTyping(text) {
+            const textElement = document.getElementById('letter-text');
+            const hintElement = document.getElementById('hint-text');
+            const cursor = document.getElementById('cursor');
+            
+            currentText = text;
+            textElement.innerHTML = "";
+            charIndex = 0;
+            isTyping = true;
+            hintElement.style.opacity = 0;
+            cursor.style.display = "inline-block";
+
+            typeNextChar(); 
+        }
+
+        function typeNextChar() {
+            if (!isTyping) return;
+
+            const textElement = document.getElementById('letter-text');
+            const currentChar = currentText.charAt(charIndex);
+            
+            // Logic ini persis dari snippet yang direquest
+            textElement.innerHTML += (currentChar === '\n') ? '<br>' : currentChar;
+            charIndex++;
+
+            if (charIndex < currentText.length) {
+                let nextDelay = 35; 
+
+                // Check for Sentence Endings (. ? !)
+                if (currentChar === '.' || currentChar === '?' || currentChar === '!') {
+                    if (charIndex < currentText.length && currentText.charAt(charIndex) === '.') {
+                        nextDelay = 35; // Kalau titiknya beruntun (...)
+                    } else {
+                        nextDelay = 700; // Pause at end of sentence
+                    }
+                } 
+                else if (currentChar === ',') {
+                    nextDelay = 200; 
+                }
+
+                typingTimeout = setTimeout(typeNextChar, nextDelay);
+            } else {
+                finishTyping();
+            }
+        }
+
+        function finishTyping() {
+            clearTimeout(typingTimeout);
+            isTyping = false;
+            // Pastikan text full ter-render saat skip
+            document.getElementById('letter-text').innerHTML = currentText.replace(/\n/g, '<br>');
+            document.getElementById('hint-text').style.opacity = 0.6;
+        }
+
+        window.handleClick = () => {
+            if (isTyping) {
+                finishTyping(); 
+            } else {
+                nextLetterSlide(); 
+            }
+        };
+
+        function nextLetterSlide() {
+            if (letterIndex < letterParagraphs.length - 1) {
+                letterIndex++;
+                updateDots(letterIndex);
+                prepareTyping(letterParagraphs[letterIndex]);
+            } else {
+                document.getElementById('hint-text').innerText = "❤️";
+                document.getElementById('cursor').style.display = "none";
+            }
+        }
+
+        function updateDots(index) {
+            const dots = document.querySelectorAll('.progress-dot');
+            dots.forEach((dot, i) => {
+                if(i === index) dot.classList.add('active');
+                else dot.classList.remove('active');
+            });
+        }
     </script>
 </body>
-
 </html>
