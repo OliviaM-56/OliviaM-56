@@ -172,8 +172,8 @@
                 </div>`,
             kiara: `
                 <button class="back-btn" onclick="back()">←</button>
-                <div class="glass-card" style="text-align:center"><h2>16:00 - Sore</h2>
-                    <p>Ke <b>Kiara Artha Park</b> yuk? Pake voucher mixue kamu hehe.</p>
+                <div class="glass-card" style="text-align:center"><h2>16:00</h2>
+                    <p>Karena belakangan ini sorenya hujan mulu, kita ke <b>Kiara Artha Park</b> aja yukk? Buat makan malem/sore terus sekalian bisa pake voucher mixue kamu hehe</p>
                     <button class="primary-btn" onclick="nav('sum')">ACC</button>
                     <button class="btn-sec" onclick="nav('alt')">Ga ACC :(</button>
                 </div>`,
@@ -259,10 +259,10 @@
         window.fillSum = () => {
             const s = document.getElementById('sum-list');
             s.innerHTML = `
-                <div class="summary-item"><span class="s-icon">🚗</span><div><b>Jemput</b><br>${state.pickup}</div></div>
-                <div class="summary-item"><span class="s-icon">🍚</span><div><b>Makan</b><br>${state.sel.lunch || 'Langsung Nonton'}</div></div>
-                <div class="summary-item"><span class="s-icon">🎬</span><div><b>Film</b><br>${state.sel.movie || '-'}</div></div>
-                <div class="summary-item"><span class="s-icon">🌳</span><div><b>Sore</b><br>${state.sel.alt || 'Kiara Artha Park'}</div></div>
+                <div class="summary-item"><span class="s-icon">🚗</span><b>${state.pickup}</b></div>
+                <div class="summary-item"><span class="s-icon">🍚</span><b>${state.sel.lunch || 'Langsung Nonton'}</b></div>
+                <div class="summary-item"><span class="s-icon">🎬</span><b>${state.sel.movie || '-'}</b></div>
+                <div class="summary-item"><span class="s-icon">🌳</span><b>${state.sel.alt || 'Kiara Artha Park'}</b></div>
             `;
         };
 
