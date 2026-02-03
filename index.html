@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Isii!</title>
+    <title>Hai, Aulin.</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     
     <script type="module">
@@ -21,27 +22,18 @@
             measurementId: "G-EGWD9HYXNZ"
         };
 
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         
-        // --- REALTIME CHECKER ---
-        // Cek data 'answers/aulin' secara langsung
-        const statusRef = ref(db, 'answers/aulin');
-        
-        onValue(statusRef, (snapshot) => {
-            const loading = document.getElementById('loading-overlay');
-            if (snapshot.exists()) {
-                // JIKA DATA ADA -> LEMPAR KE SURAT
-                window.location.href = "surat.html";
-            } else {
-                // JIKA DATA KOSONG/DIHAPUS -> HILANGKAN LOADING, TAMPILKAN LOGIN
-                if(loading) loading.style.opacity = 0;
-                setTimeout(() => { if(loading) loading.style.display = 'none'; }, 500);
-            }
-        });
-
-        // Make 'set' available globally for finish function
+        // Expose functions globally for the button clicks
         window.db = db; window.set = set; window.ref = ref;
+
+        // Auto-Check: Kalau sudah pernah isi, langsung lempar (opsional)
+        // const statusRef = ref(db, 'answers/aulin');
+        // onValue(statusRef, (snapshot) => {
+        //    if (snapshot.exists()) window.location.href = "surat.html";
+        // });
     </script>
 
     <style>
@@ -50,21 +42,33 @@
         body { background: radial-gradient(circle at center, #fcecef 0%, #fff0f5 40%, #ffffff 100%); color: var(--text); height: 100vh; font-family: 'Poppins', sans-serif; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
         #app-container { width: 100%; max-width: 500px; height: 100%; position: relative; display: flex; flex-direction: column; }
         
-        /* Loading Overlay */
-        #loading-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #fff0f5; z-index: 9999; display: flex; justify-content: center; align-items: center;
-            transition: opacity 0.5s ease;
+        /* Vertical Line */
+        .vertical-line {
+            position: absolute; top: 0; bottom: 0; left: 50%; width: 2px;
+            background: linear-gradient(to bottom, transparent, var(--primary) 20%, var(--primary) 80%, transparent);
+            transform: translateX(-50%); z-index: 0; display: none;
         }
-        .spinner { width: 40px; height: 40px; border: 4px solid #fff; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* UI Elements & Animations */
-        .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 20px 20px 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); background: transparent; }
-        .slide-center { transform: translateX(0); }
-        .slide-right { transform: translateX(100%); }
-        .slide-left { transform: translateX(-100%); }
+        /* Slide Animation (Vertical) */
+        .slide { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            padding: 20px 20px 80px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease; 
+            background: transparent; z-index: 2;
+        }
+        .slide-center { transform: translateY(0); opacity: 1; }
+        .slide-top { transform: translateY(-100vh); opacity: 0; }
+        .slide-bottom { transform: translateY(100vh); opacity: 0; }
         
+        .timeline-node { width: 16px; height: 16px; background: var(--primary); border: 3px solid white; border-radius: 50%; box-shadow: 0 0 10px rgba(212, 139, 160, 0.5); margin-bottom: 20px; z-index: 2; }
+
+        /* Login (No Box) */
+        .login-view { text-align: center; z-index: 10; }
+        .login-view h1 { font-size: 2.5rem; margin-bottom: 5px; }
+        .login-view input { background: rgba(255,255,255,0.4); border: 2px solid white; box-shadow: none; width: 200px; font-size: 1.2rem; letter-spacing: 5px; }
+
+        /* Components */
         .glass-card { background: var(--glass); border: 1px solid white; padding: 25px; border-radius: 25px; width: 100%; box-shadow: 0 10px 40px rgba(212, 139, 160, 0.2); position: relative; }
         
         button.primary-btn { 
@@ -72,31 +76,26 @@
             border-radius: 50px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: 600; 
             box-shadow: 0 4px 10px rgba(212, 139, 160, 0.3); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
-        button.primary-btn:hover { transform: translateY(-3px) scale(1.02); background-color: var(--primary-dark); box-shadow: 0 10px 20px rgba(212, 139, 160, 0.4); }
-        button.primary-btn:active { transform: scale(0.95); }
-
-        .btn-sec { background: transparent; border: 2px solid var(--primary); color: var(--primary); padding: 10px; border-radius: 50px; width: 100%; margin-top: 10px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; }
-        .btn-sec:hover { background-color: #fff0f5; transform: translateY(-2px); }
-        .back-btn { position: absolute; top: 15px; left: 15px; width: 35px; height: 35px; border-radius: 50%; background: white; border: 1px solid #eee; color: var(--primary); font-weight: bold; cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: all 0.3s; }
-        .back-btn:hover { transform: scale(1.15) rotate(-10deg); background-color: var(--primary); color: white; border-color: var(--primary); }
-
-        input, textarea { width: 100%; padding: 15px; border-radius: 15px; border: 1px solid #eee; margin-bottom: 10px; font-family: inherit; transition: 0.3s; }
-        input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(212, 139, 160, 0.1); outline: none; }
+        button.primary-btn:hover { transform: translateY(-3px) scale(1.02); background: var(--primary-dark); }
         
-        #progress-header { padding: 20px; width: 100%; z-index: 10; }
-        .track { position: relative; height: 2px; background: #e0e0e0; display: flex; justify-content: space-between; align-items: center; }
-        .fill { position: absolute; left: 0; height: 100%; background: var(--primary); width: 0%; transition: width 0.4s; }
-        .dot { width: 12px; height: 12px; background: #e0e0e0; border-radius: 50%; z-index: 1; border: 2px solid white; transition: 0.3s; }
-        .dot.active { background: var(--primary); transform: scale(1.3); }
+        .btn-sec { background: transparent; border: 2px solid var(--primary); color: var(--primary); padding: 10px; border-radius: 50px; width: 100%; margin-top: 10px; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        .btn-sec:hover { background: #fff0f5; }
 
-        .movie-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
-        .movie-card { background: white; border-radius: 10px; overflow: hidden; font-size: 0.8rem; border: 2px solid transparent; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .movie-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-color: #fff0f5; }
-        .poster { height: 200px; background: #eee; background-size: cover; background-position: center; }
-        .sch-btn { padding: 5px 8px; font-size: 0.7rem; background: var(--primary); color: white; border-radius: 6px; border: none; margin: 2px; cursor: pointer; transition: all 0.2s ease; }
-        .sch-btn:hover { transform: scale(1.1); background-color: var(--primary-dark); }
+        .back-btn { position: absolute; top: 15px; left: 15px; width: 35px; height: 35px; border-radius: 50%; background: white; border: 1px solid #eee; color: var(--primary); font-weight: bold; cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.3s; }
+        .back-btn:hover { transform: scale(1.1); background: var(--primary); color: white; }
+
+        input, textarea { width: 100%; padding: 15px; border-radius: 15px; border: 1px solid #eee; margin-bottom: 10px; font-family: inherit; text-align: center; outline: none; }
+        textarea { text-align: left; }
         
-        .option-item { background: white; padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; cursor: pointer; border: 1px solid transparent; transition: all 0.3s; }
+        /* Movie Grid */
+        .movie-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; align-items: start; }
+        .movie-card { background: white; border-radius: 10px; overflow: hidden; font-size: 0.8rem; border: 2px solid transparent; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; flex-direction: column; height: auto; transition: 0.3s; }
+        .movie-card:hover { transform: translateY(-5px); border-color: #fff0f5; }
+        .poster { height: 160px; background: #eee; background-size: cover; background-position: center; flex-shrink: 0; }
+        .sch-btn { padding: 6px; font-size: 0.7rem; background: var(--primary); color: white; border-radius: 6px; border: none; margin: 3px; cursor: pointer; display: inline-block; transition: 0.2s; }
+        .sch-btn:hover { transform: scale(1.1); background: var(--primary-dark); }
+        
+        .option-item { background: white; padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; cursor: pointer; border: 1px solid transparent; transition: 0.3s; }
         .option-item:hover { border-color: var(--primary); background: #fff0f5; transform: translateX(5px); }
         
         .summary-item { display: flex; margin-bottom: 10px; text-align: left; border-bottom: 1px dashed #eee; padding-bottom: 5px; }
@@ -109,154 +108,150 @@
     </style>
 </head>
 <body>
-    <div id="loading-overlay"><div class="spinner"></div></div>
-
     <div id="app-container">
-        <div id="progress-header">
-            <div class="track">
-                <div class="fill" id="p-fill"></div>
-                <div class="dot active" id="d0"></div><div class="dot" id="d1"></div><div class="dot" id="d2"></div><div class="dot" id="d3"></div><div class="dot" id="d4"></div>
-            </div>
-        </div>
-
+        <div class="vertical-line" id="v-line"></div>
         <div id="viewport"></div>
     </div>
 
     <script>
-        // --- CONFIG ---
-        const TRAVEL_TIMES = { "Home": { "Paskal": 32, "PVJ": 46, "Ton Kedai": 45, "Ciwalk": 52, "BIP": 42, "Citylink": 23 }, "Paskal": { "PVJ": 13, "Paskal": 0, "Ciwalk": 20, "BIP": 10, "Citylink": 15 }, "PVJ": { "PVJ": 0, "Paskal": 21, "Ciwalk": 10, "BIP": 17, "Citylink": 40 }, "Ton Kedai": { "PVJ": 21, "Paskal": 21, "Ciwalk": 23, "BIP": 15, "Citylink": 35 } };
+        // --- DATA & STATE ---
         const MOVIES = [
-            { id: "m1", title: "One Battle After Another", img: "https://m.media-amazon.com/images/M/MV5BMzBkZmQ0NjMtNTZlMy00ZjdlLTg5ODUtYWFlNGM0YzE3MTg0XkEyXkFqcGc@._V1_.jpg", s: [{ l: "Citylink", t: "12:55" }, { l: "BIP", t: "13:05" }] },
+            { id: "m1", title: "One Battle After Another", img: "https://m.media-amazon.com/images/M/MV5BMzBkZmQ0NjMtNTZlMy00ZjdlLTg5ODUtYWFlNGM0YzE3MTg0XkEyXkFqcGc@._V1_.jpg", s: [{ l: "PVJ", t: "14:15" }, { l: "TSM", t: "13:30" }, { l: "BEC", t: "13:15" }] },
             { id: "m2", title: "5 Centimeters Per Second", img: "https://m.media-amazon.com/images/M/MV5BMDUzMjNiNGQtN2I2Yi00M2ZjLWI4NTQtNDkwNjUzYmY4ZTY4XkEyXkFqcGc@._V1_QL75_UY281_CR4,0,190,281_.jpg", s: [{ l: "Ciwalk", t: "12:50" }, { l: "PVJ", t: "13:10" }, { l: "Paskal", t: "13:45" }] },
             { id: "m3", title: "The Unexpected Family", img: "https://m.media-amazon.com/images/M/MV5BMDg2NGM5MjYtOWI2NC00OGQyLWIzNzQtOTNhNWQ5YzczYzBmXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg", s: [{ l: "Citylink", t: "12:55" }, { l: "BIP", t: "13:05" }] }
         ];
 
-        // --- STATE ---
-        let state = { pickup: "10:00", loc: "Home", date: new Date().setHours(10,0,0,0), sel: {} };
+        let state = { pickup: "10:00", loc: "Home", sel: {} };
         const stack = []; let currId = 'login';
+        const vp = document.getElementById('viewport');
 
-        // --- RENDERER ---
+        // Reset untuk testing (biar ga langsung lompat)
+        localStorage.removeItem('hasFinishedTimeline'); 
+
+        // TEMPLATES
         const views = {
             login: `
-                <div class="glass-card" style="text-align:center">
+                <div class="login-view">
                     <h1>Hi, Aulin.</h1><p>Enter passcode:</p>
                     <input type="text" id="pass" style="text-align:center; letter-spacing:5px" maxlength="6">
-                    <button class="primary-btn" onclick="login()">Unlock</button>
+                    <button class="primary-btn" onclick="window.login()">Unlock</button>
                 </div>`,
+            
             pickup: `
-                <button class="back-btn" onclick="back()">←</button>
+                <button class="back-btn" onclick="window.back()">↑</button>
+                <div class="timeline-node"></div>
                 <div class="glass-card" style="text-align:center">
-                    <h2>Jam Jemput</h2><h1 style="font-size:3rem; color:#d48ba0" id="time-display">${state.pickup}</h1>
-                    <input type="time" id="t-in" value="${state.pickup}" class="hidden" onchange="upTime(this.value)">
-                    <button class="primary-btn" onclick="nav('flow')">ACC</button>
-                    <button class="btn-sec" onclick="document.getElementById('t-in').classList.remove('hidden')">Ganti Jam</button>
+                    <h2>Aku jemput kamu jam...</h2><h1 style="font-size:3rem; color:#d48ba0" id="time-display">${state.pickup}</h1>
+                    <input type="time" id="t-in" value="${state.pickup}" class="hidden" onchange="window.upTime(this.value)">
+                    <button class="primary-btn" onclick="window.nav('flow')">Gass!</button>
+                    <button class="btn-sec" onclick="document.getElementById('t-in').classList.remove('hidden')">Eh jangan jam segitu dongg :(</button>
                 </div>`,
+            
             flow: `
-                <button class="back-btn" onclick="back()">←</button>
+                <button class="back-btn" onclick="window.back()">↑</button>
+                <div class="timeline-node"></div>
                 <div class="glass-card" style="text-align:center">
                     <h2>Next Stop?</h2>
-                    <div class="option-item" onclick="nav('lunch')"><b>Makan Dulu</b> 🍚</div>
-                    <div class="option-item" onclick="nav('movie')"><b>Langsung Nonton</b> 🍿</div>
+                    <div class="option-item" onclick="window.nav('lunch')"><b>Makan Dulu</b> 🍚</div>
+                    <div class="option-item" onclick="window.nav('movie')"><b>Langsung Nonton</b> 🍿</div>
                 </div>`,
+            
             lunch: `
-                <button class="back-btn" onclick="back()">←</button>
+                <button class="back-btn" onclick="window.back()">↑</button>
+                <div class="timeline-node"></div>
                 <div class="glass-card" style="text-align:center"><h2>Makan Siang</h2>
-                    <div class="option-item" onclick="selLunch('Paskal', 30)"><b>Paskal</b> <span class="note">30m</span></div>
-                    <div class="option-item" onclick="selLunch('PVJ', 45)"><b>PVJ</b> <span class="note">45m</span></div>
-                    <div class="option-item" onclick="selLunch('Ton Kedai', 45)"><b>Ton Kedai</b> <span class="note">45m</span></div>
+                    <div class="option-item" onclick="window.selLunch('Paskal')"><b>Paskal</b> <span class="note">30m</span></div>
+                    <div class="option-item" onclick="window.selLunch('PVJ')"><b>PVJ</b> <span class="note">45m</span></div>
+                    <div class="option-item" onclick="window.selLunch('Ton Kedai')"><b>Ton Kedai</b> <span class="note">45m</span></div>
                 </div>`,
+            
             movie: `
-                <button class="back-btn" onclick="back()">←</button>
+                <button class="back-btn" onclick="window.back()">↑</button>
+                <div class="timeline-node"></div>
                 <div class="glass-card" style="text-align:center"><h2>Nonton Apa?</h2>
                     <div class="movie-grid" id="m-grid"></div>
                 </div>`,
+            
             kiara: `
-                <button class="back-btn" onclick="back()">←</button>
+                <button class="back-btn" onclick="window.back()">↑</button>
+                <div class="timeline-node"></div>
                 <div class="glass-card" style="text-align:center"><h2>16:00</h2>
-                    <p>Karena belakangan ini sorenya hujan mulu, kita ke <b>Kiara Artha Park</b> aja yukk? Buat makan malem/sore terus sekalian bisa pake voucher mixue kamu hehe</p>
-                    <button class="primary-btn" onclick="nav('sum')">ACC</button>
-                    <button class="btn-sec" onclick="nav('alt')">Ga ACC :(</button>
+                    <p>Karena dari kemaren hujan mulu, kayaknya kita gabisa mini picnic. Walaupun hujannya udah berhenti, nanti tanahnya becek :( kita ke <b>Kiara Artha Park</b> aja yuk? Cari makan malem/sore, sekalian disana ada mixue, bisa pake voucher mixue kamu hehe</p>
+                    <button class="primary-btn" onclick="window.nav('sum')">ACC 👍</button>
+                    <button class="btn-sec" onclick="window.nav('alt')">Ga ACC :(</button>
                 </div>`,
+            
             alt: `
-                <button class="back-btn" onclick="back()">←</button>
+                <button class="back-btn" onclick="window.back()">↑</button>
+                <div class="timeline-node"></div>
                 <div class="glass-card" style="text-align:center"><h2>Kemana dong?</h2>
                     <textarea id="alt-txt" rows="3"></textarea>
-                    <button class="primary-btn" onclick="saveAlt()">Lanjut</button>
+                    <button class="primary-btn" onclick="window.saveAlt()">Lanjut</button>
                 </div>`,
+            
             sum: `
-                <button class="back-btn" onclick="back()">←</button>
+                <button class="back-btn" onclick="window.back()">↑</button>
+                <div class="timeline-node"></div>
                 <div class="glass-card" style="text-align:center"><h2>The Plan</h2>
                     <div id="sum-list"></div>
-                    <button class="primary-btn" onclick="finish()">Deal!</button>
+                    <button class="primary-btn" onclick="window.finish()">Deal! ❤️</button>
                 </div>`
         };
 
-        // --- INIT ---
-        const vp = document.getElementById('viewport');
-        render('login', 'center');
-
         // --- FUNCTIONS ---
-        function render(id, dir) {
+        function render(id, dir) { 
             const div = document.createElement('div');
-            div.className = `slide slide-${dir}`;
+            
+            // Logic Vertical Animation
+            if(dir === 'down') div.className = 'slide slide-bottom';
+            else if(dir === 'up') div.className = 'slide slide-top';
+            else div.className = 'slide slide-center';
+
             div.innerHTML = views[id];
             div.id = id; 
             vp.appendChild(div);
             
-            // Post-render logic
             if(id === 'movie') fillMovies();
             if(id === 'sum') fillSum();
             if(id === 'pickup') document.getElementById('time-display').innerText = state.pickup;
 
-            // Anim
             requestAnimationFrame(() => {
                 div.className = 'slide slide-center';
                 if(vp.children.length > 1) {
                     const old = vp.children[0];
-                    old.className = `slide slide-${dir === 'right' ? 'left' : 'right'}`;
+                    old.className = `slide ${dir === 'down' ? 'slide-top' : 'slide-bottom'}`;
                     setTimeout(() => old.remove(), 500);
                 }
             });
-            
-            // Progress
-            const steps = {pickup:0, flow:1, lunch:1, movie:2, kiara:3, alt:3, sum:4};
-            if(steps[id] !== undefined) {
-                document.getElementById('p-fill').style.width = (steps[id]*25)+'%';
-                for(let i=0;i<5;i++) document.getElementById('d'+i).className = i<=steps[id] ? 'dot active' : 'dot';
-            }
         }
 
         window.login = () => {
             if(document.getElementById('pass').value === '565656') {
-                currId = 'pickup'; render('pickup', 'right');
+                document.getElementById('v-line').style.display = 'block'; 
+                currId = 'pickup'; render('pickup', 'down');
             } else alert('Salah password :p');
         };
 
-        window.nav = (id) => { stack.push(currId); currId = id; render(id, 'right'); };
-        window.back = () => { if(stack.length) { const p = stack.pop(); currId = p; render(p, 'left'); } };
-        
+        window.nav = (id) => { stack.push(currId); currId = id; render(id, 'down'); };
+        window.back = () => { if(stack.length) { const p = stack.pop(); currId = p; render(p, 'up'); } };
         window.upTime = (v) => { state.pickup = v; document.getElementById('time-display').innerText = v; };
-        
-        window.selLunch = (l, t) => { 
-            state.loc = l; state.sel.lunch = l; 
-            nav('movie'); 
-        };
+        window.selLunch = (l) => { state.loc = l; state.sel.lunch = l; window.nav('movie'); };
 
-        window.fillMovies = () => {
+        function fillMovies() {
             const c = document.getElementById('m-grid');
             MOVIES.forEach(m => {
-                let html = `<div class="movie-card"><div class="poster" style="background-image:url('${m.img}')"></div><div style="padding:5px"><b>${m.title}</b><br>`;
+                let html = `<div class="movie-card"><div class="poster" style="background-image:url('${m.img}')"></div><div style="padding:10px; text-align:left;"><b>${m.title}</b><div style="margin-top:5px">`;
                 if(!m.s.length) html += `<i class="note">Belum ada jadwal</i>`;
-                m.s.forEach(s => html += `<button class="sch-btn" onclick="pickMov('${m.title}','${s.l}','${s.t}')">${s.l} ${s.t}</button>`);
-                html += `</div></div>`;
+                m.s.forEach(s => html += `<button class="sch-btn" onclick="window.pickMov('${m.title}','${s.l}','${s.t}')">${s.l} ${s.t}</button>`);
+                html += `</div></div></div>`;
                 c.innerHTML += html;
             });
-        };
+        }
 
-        window.pickMov = (t, l, tm) => { state.sel.movie = `${t} (${l} ${tm})`; nav('kiara'); };
-        window.saveAlt = () => { state.sel.alt = document.getElementById('alt-txt').value; nav('sum'); };
+        window.pickMov = (t, l, tm) => { state.sel.movie = `${t} (${l} ${tm})`; window.nav('kiara'); };
+        window.saveAlt = () => { state.sel.alt = document.getElementById('alt-txt').value; window.nav('sum'); };
 
-        window.fillSum = () => {
+        function fillSum() {
             const s = document.getElementById('sum-list');
             s.innerHTML = `
                 <div class="summary-item"><span class="s-icon">🚗</span><b>${state.pickup}</b></div>
@@ -264,22 +259,40 @@
                 <div class="summary-item"><span class="s-icon">🎬</span><b>${state.sel.movie || '-'}</b></div>
                 <div class="summary-item"><span class="s-icon">🌳</span><b>${state.sel.alt || 'Kiara Artha Park'}</b></div>
             `;
-        };
+        }
 
+        // --- FUNGSI SAVE ANTI-MACET ---
         window.finish = () => {
             const btn = document.querySelector('.primary-btn');
             btn.innerText = "Saving...";
             
-            // KEY CHANGE: Simpan dengan key 'answers/aulin' agar mudah dicek
-            // Menggunakan SET (bukan PUSH) agar menimpa data lama (resetable)
-            window.set(window.ref(window.db, 'answers/aulin'), {
-                ...state, user: "Aulin", timestamp: new Date().toISOString()
-            }).then(() => {
-                // Setelah save berhasil, firebase listener di atas akan otomatis redirect ke surat.html
-                // Tapi kita bisa paksa redirect juga biar cepat
+            let isSaved = false;
+
+            // 1. Coba Save ke Firebase
+            if(window.set && window.ref && window.db) {
+                window.set(window.ref(window.db, 'answers/aulin'), {
+                    ...state, user: "Aulin", timestamp: new Date().toISOString()
+                }).then(() => {
+                    isSaved = true;
+                    goNext();
+                });
+            }
+
+            // 2. TIMEOUT: Kalau 2.5 detik ga ada respon, PAKSA LANJUT
+            setTimeout(() => {
+                if(!isSaved) {
+                    console.log("Save timeout, forcing redirect...");
+                    goNext();
+                }
+            }, 2500);
+
+            function goNext() {
+                localStorage.setItem('done', 'true');
                 window.location.href = "surat.html";
-            });
+            }
         };
+
+        render('login', 'center'); // Start
     </script>
 </body>
 </html>
