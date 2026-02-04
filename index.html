@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hai, Aulin.</title>
+    <title>Hi, Aulin.</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     
@@ -22,18 +22,37 @@
             measurementId: "G-EGWD9HYXNZ"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         
-        // Expose functions globally for the button clicks
+        // Expose functions global
         window.db = db; window.set = set; window.ref = ref;
 
-        // Auto-Check: Kalau sudah pernah isi, langsung lempar (opsional)
-        // const statusRef = ref(db, 'answers/aulin');
-        // onValue(statusRef, (snapshot) => {
-        //    if (snapshot.exists()) window.location.href = "surat.html";
-        // });
+        // --- CEK STATUS PENGISIAN DARI DATABASE ---
+        const statusRef = ref(db, 'answers/aulin');
+        
+        // Listener ini akan jalan DULUAN begitu web dibuka
+        onValue(statusRef, (snapshot) => {
+            const loading = document.getElementById('loading-overlay');
+            
+            if (snapshot.exists()) {
+                // KASUS 1: DATA SUDAH ADA DI FIREBASE
+                // Artinya Aulin sudah mengisi (dari HP manapun)
+                // Langsung lempar ke Surat
+                window.location.href = "surat.html";
+            } else {
+                // KASUS 2: DATA BELUM ADA
+                // Hilangkan Loading -> Tampilkan Login Timeline
+                if(loading) {
+                    loading.style.opacity = 0;
+                    setTimeout(() => {
+                        loading.style.display = 'none';
+                        // Baru render login setelah loading hilang
+                        if(typeof window.render === 'function') window.render('login', 'center');
+                    }, 500);
+                }
+            }
+        });
     </script>
 
     <style>
@@ -42,6 +61,15 @@
         body { background: radial-gradient(circle at center, #fcecef 0%, #fff0f5 40%, #ffffff 100%); color: var(--text); height: 100vh; font-family: 'Poppins', sans-serif; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
         #app-container { width: 100%; max-width: 500px; height: 100%; position: relative; display: flex; flex-direction: column; }
         
+        /* LOADING SCREEN (PENTING AGAR TIDAK KEDIP) */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff0f5; z-index: 9999; display: flex; justify-content: center; align-items: center;
+            transition: opacity 0.5s ease;
+        }
+        .spinner { width: 40px; height: 40px; border: 4px solid #fff; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         /* Vertical Line */
         .vertical-line {
             position: absolute; top: 0; bottom: 0; left: 50%; width: 2px;
@@ -108,6 +136,8 @@
     </style>
 </head>
 <body>
+    <div id="loading-overlay"><div class="spinner"></div></div>
+
     <div id="app-container">
         <div class="vertical-line" id="v-line"></div>
         <div id="viewport"></div>
@@ -121,12 +151,9 @@
             { id: "m3", title: "The Unexpected Family", img: "https://m.media-amazon.com/images/M/MV5BMDg2NGM5MjYtOWI2NC00OGQyLWIzNzQtOTNhNWQ5YzczYzBmXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg", s: [{ l: "Citylink", t: "12:55" }, { l: "BIP", t: "13:05" }] }
         ];
 
-        let state = { pickup: "10:00", loc: "Home", sel: {} };
+        let state = { pickup: "10:00", loc: "Home", date: new Date().setHours(10,0,0,0), sel: {} };
         const stack = []; let currId = 'login';
         const vp = document.getElementById('viewport');
-
-        // Reset untuk testing (biar ga langsung lompat)
-        localStorage.removeItem('hasFinishedTimeline'); 
 
         // TEMPLATES
         const views = {
@@ -175,8 +202,8 @@
             kiara: `
                 <button class="back-btn" onclick="window.back()">↑</button>
                 <div class="timeline-node"></div>
-                <div class="glass-card" style="text-align:center"><h2>16:00</h2>
-                    <p>Karena dari kemaren hujan mulu, kayaknya kita gabisa mini picnic. Walaupun hujannya udah berhenti, nanti tanahnya becek :( kita ke <b>Kiara Artha Park</b> aja yuk? Cari makan malem/sore, sekalian disana ada mixue, bisa pake voucher mixue kamu hehe</p>
+                <div class="glass-card" style="text-align:center"><h2>16:00 - Sore</h2>
+                    <p>Ke <b>Kiara Artha Park</b> yuk? Pake voucher mixue kamu hehe.</p>
                     <button class="primary-btn" onclick="window.nav('sum')">ACC 👍</button>
                     <button class="btn-sec" onclick="window.nav('alt')">Ga ACC :(</button>
                 </div>`,
@@ -199,10 +226,10 @@
         };
 
         // --- FUNCTIONS ---
-        function render(id, dir) { 
+        // Render function ditempel ke window agar bisa dipanggil di onValue kalau perlu
+        window.render = function(id, dir) { 
             const div = document.createElement('div');
             
-            // Logic Vertical Animation
             if(dir === 'down') div.className = 'slide slide-bottom';
             else if(dir === 'up') div.className = 'slide slide-top';
             else div.className = 'slide slide-center';
@@ -228,12 +255,12 @@
         window.login = () => {
             if(document.getElementById('pass').value === '565656') {
                 document.getElementById('v-line').style.display = 'block'; 
-                currId = 'pickup'; render('pickup', 'down');
+                currId = 'pickup'; window.render('pickup', 'down');
             } else alert('Salah password :p');
         };
 
-        window.nav = (id) => { stack.push(currId); currId = id; render(id, 'down'); };
-        window.back = () => { if(stack.length) { const p = stack.pop(); currId = p; render(p, 'up'); } };
+        window.nav = (id) => { stack.push(currId); currId = id; window.render(id, 'down'); };
+        window.back = () => { if(stack.length) { const p = stack.pop(); currId = p; window.render(p, 'up'); } };
         window.upTime = (v) => { state.pickup = v; document.getElementById('time-display').innerText = v; };
         window.selLunch = (l) => { state.loc = l; state.sel.lunch = l; window.nav('movie'); };
 
@@ -261,39 +288,20 @@
             `;
         }
 
-        // --- FUNGSI SAVE ANTI-MACET ---
         window.finish = () => {
             const btn = document.querySelector('.primary-btn');
             btn.innerText = "Saving...";
             
-            let isSaved = false;
-
-            // 1. Coba Save ke Firebase
-            if(window.set && window.ref && window.db) {
-                window.set(window.ref(window.db, 'answers/aulin'), {
-                    ...state, user: "Aulin", timestamp: new Date().toISOString()
-                }).then(() => {
-                    isSaved = true;
-                    goNext();
-                });
-            }
-
-            // 2. TIMEOUT: Kalau 2.5 detik ga ada respon, PAKSA LANJUT
-            setTimeout(() => {
-                if(!isSaved) {
-                    console.log("Save timeout, forcing redirect...");
-                    goNext();
-                }
-            }, 2500);
-
-            function goNext() {
-                localStorage.setItem('done', 'true');
+            // Simpan ke Firebase dan LocalStorage
+            window.set(window.ref(window.db, 'answers/aulin'), {
+                ...state, user: "Aulin", timestamp: new Date().toISOString()
+            }).then(() => {
                 window.location.href = "surat.html";
-            }
+            }).catch(e => {
+                // Fallback kalau firebase error
+                window.location.href = "surat.html";
+            });
         };
-
-        render('login', 'center'); // Start
     </script>
 </body>
 </html>
-
